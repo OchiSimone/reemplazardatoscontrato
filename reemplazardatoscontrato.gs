@@ -95,8 +95,24 @@ let datos = extraerDatosDesdeTextoPlano(texto);  // <-- TEXTO ORIGINAL, no texto
 function extraerDatosDesdeTextoPlano(textoOriginal) {
   const datos = {};
 
-  // Extraer vendedor y comprador
-  const bloques = textoOriginal.match(
+  // Extraer fechas de firma (si existen) antes de limpiar el texto
+  const fechaVMatch = textoOriginal.match(/fecha\s+firma\s+vendedor\s+(\d{1,2}\s+\w+\s+\d{4})/i);
+  if (fechaVMatch) {
+    datos['FECHA_FIRMA_VENDEDOR'] = fechaVMatch[1].trim();
+  }
+  const fechaCMatch = textoOriginal.match(/fecha\s+firma\s+comprador\s+(\d{1,2}\s+\w+\s+\d{4})/i);
+  if (fechaCMatch) {
+    datos['FECHA_FIRMA_COMPRADOR'] = fechaCMatch[1].trim();
+  }
+
+  // Eliminar frases "FECHA FIRMA VENDEDOR ..." y "FECHA FIRMA COMPRADOR ..." para
+  // que no interfieran con el bloque vendedor/comprador
+  const textoSinFechas = textoOriginal
+    .replace(/fecha\s+firma\s+vendedor\s+\d{1,2}\s+\w+\s+\d{4}/i, '')
+    .replace(/fecha\s+firma\s+comprador\s+\d{1,2}\s+\w+\s+\d{4}/i, '');
+
+  // Extraer vendedor y comprador desde el texto limpio
+  const bloques = textoSinFechas.match(
     /vendedor[:\s]+(.+?)\s+comprador[:\s]+(.+?)(?=información vehicular|patente|tipo|marca|modelo|año|color|tasacion|$)/is
   );
   if (!bloques || bloques.length < 3) {
@@ -124,10 +140,6 @@ function extraerDatosDesdeTextoPlano(textoOriginal) {
     .trim()
     .toUpperCase();
 
-  const fechaVMatch = textoOriginal.match(/fecha\s+firma\s+vendedor\s+(\d{1,2}\s+\w+\s+\d{4})/i);
-  if (fechaVMatch) {
-    datos['FECHA_FIRMA_VENDEDOR'] = fechaVMatch[1].trim();
-  }
 
   const partesC = compradorTxt.split(',');
   datos['NOMBRE_COMPRADOR'] = partesC[0]?.trim();
@@ -143,10 +155,6 @@ function extraerDatosDesdeTextoPlano(textoOriginal) {
     .trim()
     .toUpperCase();
 
-  const fechaCMatch = textoOriginal.match(/fecha\s+firma\s+comprador\s+(\d{1,2}\s+\w+\s+\d{4})/i);
-  if (fechaCMatch) {
-    datos['FECHA_FIRMA_COMPRADOR'] = fechaCMatch[1].trim();
-  }
 
   return datos;
 }
