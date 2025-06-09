@@ -202,56 +202,42 @@ function completarDesdeBloqueVehicular(textoOriginal, datos) {
 function validarYCompletarDatos(datos) {
   const ui = DocumentApp.getUi();
   const camposObligatorios = [
+    'PATENTE',
     'NOMBRE_VENDEDOR',
-    'RUT_VENDEDOR',
-    'DIRECCION_VENDEDOR',
+    'DNI_VENDEDOR',
     'NOMBRE_COMPRADOR',
-    'RUT_COMPRADOR',
-    'DIRECCION_COMPRADOR',
-    'FECHA_FIRMA_VENDEDOR',
-    'FECHA_FIRMA_COMPRADOR',
-    'VEHICULO_MARCA',
-    'VEHICULO_MODELO',
-    'VEHICULO_TIPO',
-    'VEHICULO_ANO',
-    'VEHICULO_COLOR',
-    'VEHICULO_COMBUSTIBLE',
-    'VEHICULO_PATENTE',
-    'VEHICULO_NRO_MOTOR',
-    'VEHICULO_NRO_CHASIS',
+    'DNI_COMPRADOR',
     'VALOR_TASACION',
     'VALOR_TASACION_LETRAS'
   ];
+
+  function isCampoValido(valor) {
+    return (
+      valor &&
+      valor.toString().trim() !== '' &&
+      valor.toString().trim() !== '[PENDIENTE]'
+    );
+  }
+
   for (const campo of camposObligatorios) {
     if (campo === 'FECHA_CONTRATO') {
       datos[campo] = generarFechaHoy();
       continue;
     }
-    if (!datos[campo] || datos[campo] === '') {
-      let mensaje = `Falta el dato: ${campo}.\n\nPor favor ingrésalo`;
-      const ejemplos = {
-        RUT_VENDEDOR: 'Ej: 12.345.678-9',
-        RUT_COMPRADOR: 'Ej: 21.987.654-3',
-        FECHA_FIRMA_VENDEDOR: 'Ej: 1 junio 2025',
-        FECHA_FIRMA_COMPRADOR: 'Ej: 5 junio 2025',
-        VEHICULO_PATENTE: 'Ej: STTP66-4',
-        VEHICULO_ANO: 'Ej: 2023',
-        VALOR_TASACION: 'Ej: 4.870.000',
-        VALOR_TASACION_LETRAS: 'Ej: CUATRO MILLONES OCHOCIENTOS SETENTA MIL PESOS'
-      };
-      if (ejemplos[campo]) mensaje += `\nFormato sugerido: ${ejemplos[campo]}`;
-      const input = ui.prompt(mensaje);
-      if (input.getSelectedButton() === ui.Button.OK) {
-        datos[campo] = input.getResponseText().trim();
+
+    if (!isCampoValido(datos[campo])) {
+      const respuesta = ui.prompt(
+        `Falta completar el campo obligatorio: ${campo}`,
+        ui.ButtonSet.OK_CANCEL
+      );
+      if (respuesta.getSelectedButton() === ui.Button.OK) {
+        datos[campo] = respuesta.getResponseText().trim();
+      } else {
+        throw new Error(`Detenido por falta de dato obligatorio: ${campo}`);
       }
     }
   }
-  datos['FECHA_CONTRATO'] = generarFechaHoy();
-  if (datos['VALOR_TASACION']) {
-    datos['VALOR_VENTA'] = datos['VALOR_TASACION'];
-    datos['VALOR_VENTA_LETRAS'] = convertirNumeroALetras(datos['VALOR_TASACION']);
-    datos['VALOR_TASACION_LETRAS'] = convertirNumeroALetras(datos['VALOR_TASACION']);
-  }
+
   return datos;
 }
 
